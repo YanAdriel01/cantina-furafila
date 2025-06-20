@@ -1,0 +1,12 @@
+{
+  "name": "cantina-furafila-web",
+  "version": "1.0.0",
+  "description": "Sistema de Cantina com Interface Web",
+  "main": "app.py",
+  "scripts": {
+    "dev": "python app.py",
+    "start": "python app.py"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
