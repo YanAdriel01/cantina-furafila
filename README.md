@@ -1,6 +1,6 @@
-# Sistema de autenticação e rotas básicas
+# Templates HTML e interface
 
 ## Estrutura Base do Projeto
-- Login/cadastro
-- Validadores
-- Rotas básicas
+- Design responsivo
+- Tailwind CSS
+- Alpine.js
