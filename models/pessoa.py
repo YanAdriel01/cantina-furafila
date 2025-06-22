@@ -1,26 +1,23 @@
 from abc import ABC, abstractmethod
 
 class Pessoa(ABC):
-    """
-    Classe abstrata que representa uma pessoa no sistema
-    Demonstra o pilar de ABSTRAÇÃO
-    """
+    #classe abstrata representando uma pessoa no sistema
     
     def __init__(self, user_data=None, nome=None, cpf=None, email=None):
         if user_data:
-            # Construtor a partir de dados do banco
+            #constructor com dados a partir do banco de dados
             self._id = user_data['id']
             self.__nome = user_data['nome']
             self.__cpf = user_data['cpf']
             self.__email = user_data['email']
         else:
-            # Construtor tradicional
+            #constructor
             self._id = None
             self.__nome = nome
             self.__cpf = cpf
             self.__email = email
     
-    # Métodos de acesso (getters) - Encapsulamento
+    # métodos getters para acessar as informações 
     def get_id(self):
         return self._id
     
@@ -33,9 +30,9 @@ class Pessoa(ABC):
     def get_email(self):
         return self.__email
     
-    # Métodos de modificação (setters) - Encapsulamento
+    # Métodos de modificação setter - encapsulamento das informações
     def set_nome(self, nome):
-        self.__nome = nome
+        self.__nome = nome #conteúdo protegido
     
     def set_email(self, email):
         self.__email = email

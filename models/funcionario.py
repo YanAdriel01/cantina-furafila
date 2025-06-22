@@ -1,10 +1,7 @@
 from models.pessoa import Pessoa
 
 class Funcionario(Pessoa):
-    """
-    Classe Funcionario que herda de Pessoa
-    Demonstra HERANÇA
-    """
+    #Classe abstrata representando um funcionário no sistema, é subclasse de Pessoa
     
     def __init__(self, user_data=None, nome=None, cpf=None, email=None, senha=None):
         super().__init__(user_data, nome, cpf, email)
@@ -14,25 +11,19 @@ class Funcionario(Pessoa):
             self.__senha = senha
     
     def verificar_senha(self, senha):
-        """Verifica se a senha está correta"""
+        #método usado para verificar a senha
         return self.__senha == senha
     
     def mostrar_informacoes(self):
-        """Implementação do método abstrato"""
-        return f"👷 Funcionário: {self.get_nome()}, Email: {self.get_email()}"
+        #método para mostrar informações usando getters
+        return f" Funcionário: {self.get_nome()}, Email: {self.get_email()}"
 
 class Gerente(Funcionario):
-    """
-    Classe Gerente que herda de Funcionario
-    Demonstra HERANÇA - tem todas as funcionalidades do funcionário + administrativas
-    """
+    #Essa classe abstrata representa um gerente que possui outras permissões, subclasse de Funcionario
     
     def __init__(self, user_data=None, nome=None, cpf=None, email=None, senha=None):
         super().__init__(user_data, nome, cpf, email, senha)
     
     def mostrar_informacoes(self):
-        """
-        Sobrescreve o método da classe pai
-        Demonstra POLIMORFISMO
-        """
-        return f"👨‍💼 Gerente: {self.get_nome()}, Email: {self.get_email()}"
+        #usando o mesmo método de Funcionario para mostrar informações protegidas
+        return f"Gerente: {self.get_nome()}, Email: {self.get_email()}"
