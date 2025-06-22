@@ -9,7 +9,7 @@ from models.cantina import Cantina
 from utils.sistema_login import SistemaLogin
 
 def create_app():
-    #função para criar a aplicação Flask
+    """Factory function para criar a aplicação Flask"""
     app = Flask(__name__)
     
     # Configurar aplicação

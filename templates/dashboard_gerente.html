@@ -1,0 +1,616 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Gerente - Cantina FuraFila{% endblock %}
+
+{% block content %}
+<div x-data="gerenteDashboard()" class="space-y-8">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">
+                    <i class="fas fa-user-tie text-purple-600 mr-3"></i>
+                    Dashboard do Gerente
+                </h1>
+                <p class="text-gray-600 mt-1">Controle total do sistema</p>
+            </div>
+            
+            <!-- Controles da Cantina -->
+            <div class="flex items-center space-x-4">
+                {% if status_cantina %}
+                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        <i class="fas fa-store mr-2"></i>
+                        Cantina Aberta
+                    </span>
+                    <a href="{{ url_for('admin.toggle_cantina') }}" 
+                       class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-store-slash mr-2"></i>
+                        Fechar Cantina
+                    </a>
+                {% else %}
+                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                        <i class="fas fa-store-slash mr-2"></i>
+                        Cantina Fechada
+                    </span>
+                    <a href="{{ url_for('admin.toggle_cantina') }}" 
+                       class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-store mr-2"></i>
+                        Abrir Cantina
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas Rápidas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-lg shadow-lg p-6 text-center">
+            <i class="fas fa-clock text-yellow-500 text-3xl mb-3"></i>
+            <div class="text-2xl font-bold text-gray-800">{{ pedidos_pendentes|length }}</div>
+            <div class="text-gray-600">Pedidos Pendentes</div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 text-center">
+            <i class="fas fa-utensils text-purple-500 text-3xl mb-3"></i>
+            <div class="text-2xl font-bold text-gray-800">{{ cardapio|length }}</div>
+            <div class="text-gray-600">Itens no Cardápio</div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 text-center">
+            <i class="fas fa-users text-blue-500 text-3xl mb-3"></i>
+            <div class="text-2xl font-bold text-gray-800">{{ usuarios|length }}</div>
+            <div class="text-gray-600">Usuários Cadastrados</div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 text-center">
+            {% if status_cantina %}
+                <i class="fas fa-store text-green-500 text-3xl mb-3"></i>
+                <div class="text-lg font-bold text-green-600">ABERTA</div>
+            {% else %}
+                <i class="fas fa-store-slash text-red-500 text-3xl mb-3"></i>
+                <div class="text-lg font-bold text-red-600">FECHADA</div>
+            {% endif %}
+            <div class="text-gray-600">Status da Cantina</div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-white rounded-lg shadow-lg">
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8 px-6">
+                <button @click="activeTab = 'pedidos'" 
+                        :class="activeTab === 'pedidos' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-clock mr-2"></i>
+                    Pedidos Pendentes
+                </button>
+                <button @click="activeTab = 'estoque'" 
+                        :class="activeTab === 'estoque' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-boxes mr-2"></i>
+                    Gerenciar Estoque
+                </button>
+                <button @click="activeTab = 'usuarios'" 
+                        :class="activeTab === 'usuarios' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-users mr-2"></i>
+                    Usuários
+                </button>
+            </nav>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="p-6">
+            <!-- Pedidos Pendentes -->
+            <div x-show="activeTab === 'pedidos'">
+                {% if pedidos_pendentes %}
+                    <div class="space-y-4">
+                        {% for pedido in pedidos_pendentes %}
+                            <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <h3 class="font-semibold text-gray-800">
+                                            Pedido #{{ pedido.id }} - {{ pedido.cliente_nome }}
+                                        </h3>
+                                        <p class="text-sm text-gray-600">
+                                            {{ pedido.created_at }}
+                                        </p>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-lg font-semibold text-purple-600">
+                                            R$ {{ "%.2f"|format(pedido.total) }}
+                                        </div>
+                                        <div class="text-sm text-gray-500">
+                                            <i class="fas fa-credit-card mr-1"></i>
+                                            {{ pedido.metodo_pagamento.replace('_', ' ').title() }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-between items-center">
+                                    <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                                        <i class="fas fa-clock mr-1"></i>Aguardando Aprovação
+                                    </span>
+                                    <div class="flex space-x-2">
+                                        <a href="{{ url_for('pedido.negar_pedido', pedido_id=pedido.id) }}" 
+                                           onclick="return confirm('Tem certeza que deseja negar este pedido? O estoque será restaurado.')"
+                                           class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                                            <i class="fas fa-times mr-2"></i>
+                                            Negar
+                                        </a>
+                                        <button @click="editarPedido({{ pedido.id }})"
+                                                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                                            <i class="fas fa-edit mr-2"></i>
+                                            Editar
+                                        </button>
+                                        <a href="{{ url_for('pedido.aprovar_pedido', pedido_id=pedido.id) }}" 
+                                           class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                                            <i class="fas fa-check mr-2"></i>
+                                            Aprovar
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-check-circle text-green-400 text-4xl mb-4"></i>
+                        <p class="text-gray-500">Nenhum pedido pendente no momento!</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Gerenciar Estoque -->
+            <div x-show="activeTab === 'estoque'">
+                <!-- Adicionar Novo Item -->
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-plus text-green-600 mr-2"></i>
+                        Adicionar Novo Item
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <input type="text" 
+                               x-model="novoItem.nome"
+                               placeholder="Nome do item"
+                               class="px-3 py-2 border border-gray-300 rounded-lg">
+                        <input type="number" 
+                               x-model="novoItem.preco"
+                               placeholder="Preço"
+                               step="0.01"
+                               min="0.01"
+                               class="px-3 py-2 border border-gray-300 rounded-lg">
+                        <input type="number" 
+                               x-model="novoItem.quantidade"
+                               placeholder="Quantidade"
+                               min="0"
+                               class="px-3 py-2 border border-gray-300 rounded-lg">
+                        <button @click="adicionarItem()"
+                                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
+                            <i class="fas fa-plus mr-2"></i>
+                            Adicionar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lista de Itens -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% for item in cardapio %}
+                        <div class="border rounded-lg p-4">
+                            <div class="flex justify-between items-start mb-3">
+                                <h3 class="font-semibold text-gray-800">{{ item.nome }}</h3>
+                                <div class="flex space-x-2">
+                                    {% if item.quantidade > 5 %}
+                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                            Estoque OK
+                                        </span>
+                                    {% elif item.quantidade > 0 %}
+                                        <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                                            Estoque Baixo
+                                        </span>
+                                    {% else %}
+                                        <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                                            Esgotado
+                                        </span>
+                                    {% endif %}
+                                    <a href="{{ url_for('admin.remover_item', item_id=item.id) }}" 
+                                       onclick="return confirm('Tem certeza que deseja remover este item?')"
+                                       class="text-red-500 hover:text-red-700">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="text-lg font-bold text-purple-600">
+                                    R$ {{ "%.2f"|format(item.preco) }}
+                                </div>
+                                <div class="text-sm text-gray-600">
+                                    Estoque atual: {{ item.quantidade }}
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center space-x-2">
+                                <input type="number" 
+                                       min="0" 
+                                       value="{{ item.quantidade }}"
+                                       x-model="estoques[{{ item.id }}]"
+                                       class="flex-1 px-2 py-1 border rounded text-center">
+                                <button @click="atualizarEstoque({{ item.id }})"
+                                        class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors">
+                                    <i class="fas fa-save"></i>
+                                </button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Usuários -->
+            <div x-show="activeTab === 'usuarios'">
+                <!-- Adicionar Novo Usuário -->
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-user-plus text-green-600 mr-2"></i>
+                        Adicionar Novo Usuário
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+                        <input type="text" 
+                               x-model="novoUsuario.nome"
+                               placeholder="Nome completo"
+                               class="px-3 py-2 border border-gray-300 rounded-lg">
+                        <input type="text" 
+                               x-model="novoUsuario.cpf"
+                               placeholder="CPF (apenas números)"
+                               maxlength="11"
+                               class="px-3 py-2 border border-gray-300 rounded-lg">
+                        <input type="email" 
+                               x-model="novoUsuario.email"
+                               placeholder="Email"
+                               class="px-3 py-2 border border-gray-300 rounded-lg">
+                        <select x-model="novoUsuario.tipo" class="px-3 py-2 border border-gray-300 rounded-lg">
+                            <option value="">Tipo</option>
+                            <option value="cliente">Cliente</option>
+                            <option value="estudante">Estudante</option>
+                            <option value="funcionario">Funcionário</option>
+                            <option value="gerente">Gerente</option>
+                        </select>
+                        <input type="password" 
+                               x-model="novoUsuario.senha"
+                               placeholder="Senha (min 6 chars)"
+                               class="px-3 py-2 border border-gray-300 rounded-lg">
+                        <button @click="adicionarUsuario()"
+                                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
+                            <i class="fas fa-plus mr-2"></i>
+                            Adicionar
+                        </button>
+                    </div>
+                    <div x-show="novoUsuario.tipo === 'estudante'" class="mt-4">
+                        <input type="text" 
+                               x-model="novoUsuario.matricula"
+                               placeholder="Matrícula (apenas números)"
+                               class="px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Usuário
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Email
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Tipo
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Cadastro
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Ações
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for usuario in usuarios %}
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            {% if usuario.tipo == 'gerente' %}
+                                                <i class="fas fa-user-tie text-purple-600 mr-3"></i>
+                                            {% elif usuario.tipo == 'funcionario' %}
+                                                <i class="fas fa-hard-hat text-orange-600 mr-3"></i>
+                                            {% elif usuario.tipo == 'estudante' %}
+                                                <i class="fas fa-graduation-cap text-blue-600 mr-3"></i>
+                                            {% else %}
+                                                <i class="fas fa-user text-gray-600 mr-3"></i>
+                                            {% endif %}
+                                            <div>
+                                                <div class="text-sm font-medium text-gray-900">
+                                                    {{ usuario.nome }}
+                                                </div>
+                                                {% if usuario.matricula %}
+                                                    <div class="text-sm text-gray-500">
+                                                        Mat: {{ usuario.matricula }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ usuario.email }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                            {% if usuario.tipo == 'gerente' %}bg-purple-100 text-purple-800
+                                            {% elif usuario.tipo == 'funcionario' %}bg-orange-100 text-orange-800
+                                            {% elif usuario.tipo == 'estudante' %}bg-blue-100 text-blue-800
+                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {{ usuario.tipo.title() }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {{ usuario.created_at }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button @click="editarUsuario({{ usuario.id }}, '{{ usuario.nome }}', '{{ usuario.email }}', '{{ usuario.tipo }}', '{{ usuario.matricula or '' }}')"
+                                                class="text-blue-600 hover:text-blue-900 mr-3">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button @click="deletarUsuario({{ usuario.id }})"
+                                                class="text-red-600 hover:text-red-900">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Usuário -->
+    <div x-show="showEditModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Editar Usuário</h3>
+                <div class="space-y-4">
+                    <input type="text" x-model="editUsuario.nome" placeholder="Nome" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <input type="email" x-model="editUsuario.email" placeholder="Email" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <input type="password" x-model="editUsuario.senha" placeholder="Nova senha (opcional)" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    <select x-model="editUsuario.tipo" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        <option value="cliente">Cliente</option>
+                        <option value="estudante">Estudante</option>
+                        <option value="funcionario">Funcionário</option>
+                        <option value="gerente">Gerente</option>
+                    </select>
+                    <div x-show="editUsuario.tipo === 'estudante'">
+                        <input type="text" x-model="editUsuario.matricula" placeholder="Matrícula" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2 mt-6">
+                    <button @click="showEditModal = false" 
+                            class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
+                        Cancelar
+                    </button>
+                    <button @click="salvarEdicaoUsuario()" 
+                            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                        Salvar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function gerenteDashboard() {
+    return {
+        activeTab: 'pedidos',
+        showEditModal: false,
+        estoques: {
+            {% for item in cardapio %}
+                {{ item.id }}: {{ item.quantidade }},
+            {% endfor %}
+        },
+        novoItem: {
+            nome: '',
+            preco: '',
+            quantidade: ''
+        },
+        novoUsuario: {
+            nome: '',
+            cpf: '',
+            email: '',
+            tipo: '',
+            senha: '',
+            matricula: ''
+        },
+        editUsuario: {
+            id: null,
+            nome: '',
+            email: '',
+            senha: '',
+            tipo: '',
+            matricula: ''
+        },
+        
+        async atualizarEstoque(itemId) {
+            const novaQuantidade = parseInt(this.estoques[itemId]);
+            
+            if (isNaN(novaQuantidade) || novaQuantidade < 0) {
+                alert('Quantidade inválida! Deve ser um número maior ou igual a zero.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/atualizar_estoque', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        item_id: itemId,
+                        quantidade: novaQuantidade
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Estoque atualizado com sucesso!');
+                    location.reload();
+                } else {
+                    alert('Erro: ' + result.message);
+                }
+            } catch (error) {
+                alert('Erro ao atualizar estoque: ' + error.message);
+            }
+        },
+        
+        async adicionarItem() {
+            if (!this.novoItem.nome || !this.novoItem.preco || this.novoItem.quantidade === '') {
+                alert('Preencha todos os campos!');
+                return;
+            }
+            
+            if (parseFloat(this.novoItem.preco) <= 0) {
+                alert('Preço deve ser maior que zero!');
+                return;
+            }
+            
+            if (parseInt(this.novoItem.quantidade) < 0) {
+                alert('Quantidade não pode ser negativa!');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/adicionar_item', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(this.novoItem)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Item adicionado com sucesso!');
+                    this.novoItem = { nome: '', preco: '', quantidade: '' };
+                    location.reload();
+                } else {
+                    alert('Erro: ' + result.message);
+                }
+            } catch (error) {
+                alert('Erro ao adicionar item: ' + error.message);
+            }
+        },
+
+        async adicionarUsuario() {
+            if (!this.novoUsuario.nome || !this.novoUsuario.cpf || !this.novoUsuario.email || 
+                !this.novoUsuario.tipo || !this.novoUsuario.senha) {
+                alert('Preencha todos os campos obrigatórios!');
+                return;
+            }
+
+            if (this.novoUsuario.tipo === 'estudante' && !this.novoUsuario.matricula) {
+                alert('Matrícula é obrigatória para estudantes!');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/criar_usuario', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(this.novoUsuario)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Usuário criado com sucesso!');
+                    this.novoUsuario = { nome: '', cpf: '', email: '', tipo: '', senha: '', matricula: '' };
+                    location.reload();
+                } else {
+                    alert('Erro: ' + result.message);
+                }
+            } catch (error) {
+                alert('Erro ao criar usuário: ' + error.message);
+            }
+        },
+
+        editarUsuario(id, nome, email, tipo, matricula) {
+            this.editUsuario = { id, nome, email, senha: '', tipo, matricula };
+            this.showEditModal = true;
+        },
+
+        async salvarEdicaoUsuario() {
+            try {
+                const response = await fetch('/editar_usuario', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(this.editUsuario)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Usuário atualizado com sucesso!');
+                    this.showEditModal = false;
+                    location.reload();
+                } else {
+                    alert('Erro: ' + result.message);
+                }
+            } catch (error) {
+                alert('Erro ao atualizar usuário: ' + error.message);
+            }
+        },
+
+        async deletarUsuario(id) {
+            if (!confirm('Tem certeza que deseja deletar este usuário?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/deletar_usuario', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ user_id: id })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Usuário deletado com sucesso!');
+                    location.reload();
+                } else {
+                    alert('Erro: ' + result.message);
+                }
+            } catch (error) {
+                alert('Erro ao deletar usuário: ' + error.message);
+            }
+        },
+
+        editarPedido(pedidoId) {
+            window.location.href = `/editar_pedido/${pedidoId}`;
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -45,6 +45,39 @@ def login():
     
     return render_template('login.html')
 
+@auth_bp.route('/reset_password', methods=['POST'])
+def reset_password():
+    """Reset de senha com validação"""
+    email = request.form['email'].strip()
+    nova_senha = request.form['nova_senha'].strip()
+    
+    # Validações
+    if not email or not nova_senha:
+        flash('Email e nova senha são obrigatórios!', 'error')
+        return redirect(url_for('auth.login'))
+    
+    if not validar_email(email):
+        flash('Email inválido!', 'error')
+        return redirect(url_for('auth.login'))
+    
+    if len(nova_senha) < 6:
+        flash('A senha deve ter pelo menos 6 caracteres!', 'error')
+        return redirect(url_for('auth.login'))
+    
+    from database.dao.usuario_dao import UsuarioDAO
+    usuario_dao = UsuarioDAO(current_app.db_manager)
+    
+    user_data = usuario_dao.buscar_por_email(email)
+    if user_data:
+        if usuario_dao.alterar_senha(user_data['id'], nova_senha):
+            flash('Senha alterada com sucesso!', 'success')
+        else:
+            flash('Erro ao alterar senha!', 'error')
+    else:
+        flash('Email não encontrado!', 'error')
+    
+    return redirect(url_for('auth.login'))
+
 @auth_bp.route('/cadastro', methods=['GET', 'POST'])
 def cadastro():
     """Página de cadastro com validações"""
@@ -62,21 +95,30 @@ def cadastro():
             flash('Todos os campos são obrigatórios!', 'error')
             return render_template('cadastro.html')
         
+        if len(nome) < 2:
+            flash('Nome deve ter pelo menos 2 caracteres!', 'error')
+            return render_template('cadastro.html')
+        
         if not validar_cpf(cpf):
             flash('CPF deve conter apenas 11 números!', 'error')
             return render_template('cadastro.html')
         
         if not validar_email(email):
-            flash('Email inválido!', 'error')
+            flash('Email inválido! Deve conter @', 'error')
             return render_template('cadastro.html')
         
         if len(senha) < 6:
             flash('Senha deve ter pelo menos 6 caracteres!', 'error')
             return render_template('cadastro.html')
         
-        if eh_estudante and not validar_matricula(matricula):
-            flash('Matrícula deve conter apenas números!', 'error')
-            return render_template('cadastro.html')
+        if eh_estudante:
+            if not matricula:
+                flash('Matrícula é obrigatória para estudantes!', 'error')
+                return render_template('cadastro.html')
+            
+            if not validar_matricula(matricula):
+                flash('Matrícula deve conter apenas números!', 'error')
+                return render_template('cadastro.html')
         
         if current_app.sistema_login.cadastrar_usuario(nome, cpf, email, tipo, senha, matricula):
             flash('Cadastro realizado com sucesso! Faça login para continuar.', 'success')

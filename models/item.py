@@ -1,10 +1,12 @@
 class Item:
+    """Classe que representa um item do cardápio"""
     
     def __init__(self, nome, preco, quantidade):
-        self.__nome = nome 
-        self.__preco = preco 
-        self.__quantidade = quantidade  
+        self.__nome = nome  # Encapsulamento
+        self.__preco = preco  # Encapsulamento
+        self.__quantidade = quantidade  # Encapsulamento
     
+    # Getters - Encapsulamento
     def get_nome(self):
         return self.__nome
     

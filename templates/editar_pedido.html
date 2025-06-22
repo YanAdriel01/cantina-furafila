@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Pedido - Cantina FuraFila{% endblock %}
+
+{% block content %}
+<div x-data="editarPedido()" class="space-y-8">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">
+                    <i class="fas fa-edit text-blue-600 mr-3"></i>
+                    Editar Pedido #{{ pedido.id }}
+                </h1>
+                <p class="text-gray-600 mt-1">Cliente: {{ pedido.cliente_nome }}</p>
+                <p class="text-sm text-gray-500">{{ pedido.created_at }}</p>
+            </div>
+            
+            <div class="text-right">
+                <div class="text-2xl font-bold text-purple-600">
+                    R$ <span x-text="calcularTotal().toFixed(2)">{{ "%.2f"|format(pedido.total) }}</span>
+                </div>
+                <div class="text-sm text-gray-500">
+                    <i class="fas fa-credit-card mr-1"></i>
+                    {{ pedido.metodo_pagamento.replace('_', ' ').title() }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Itens do Pedido -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-6">
+            <i class="fas fa-shopping-cart text-green-600 mr-3"></i>
+            Itens do Pedido
+        </h2>
+        
+        <div class="space-y-4">
+            <template x-for="(item, index) in itens" :key="index">
+                <div class="border rounded-lg p-4 flex justify-between items-center">
+                    <div>
+                        <h3 class="font-semibold text-gray-800" x-text="item.item_nome"></h3>
+                        <p class="text-sm text-gray-600">
+                            R$ <span x-text="item.preco_unitario.toFixed(2)"></span> cada
+                        </p>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <label class="text-sm text-gray-600">Quantidade:</label>
+                            <input type="number" 
+                                   min="1" 
+                                   x-model="item.quantidade"
+                                   @change="validarQuantidade(index)"
+                                   class="w-20 px-2 py-1 border rounded text-center">
+                        </div>
+                        
+                        <div class="text-lg font-semibold text-purple-600">
+                            R$ <span x-text="(item.quantidade * item.preco_unitario).toFixed(2)"></span>
+                        </div>
+                        
+                        <button @click="removerItem(index)" 
+                                class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- Adicionar Novos Itens -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-6">
+            <i class="fas fa-plus text-green-600 mr-3"></i>
+            Adicionar Itens
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for item in cardapio %}
+                <div class="border rounded-lg p-4">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="font-semibold text-gray-800">{{ item.nome }}</h3>
+                        {% if item.quantidade > 0 %}
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                Disponível
+                            </span>
+                        {% else %}
+                            <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                                Esgotado
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="text-lg font-bold text-purple-600">
+                            R$ {{ "%.2f"|format(item.preco) }}
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            Estoque: {{ item.quantidade }}
+                        </div>
+                    </div>
+                    
+                    {% if item.quantidade > 0 %}
+                        <div class="flex items-center space-x-2">
+                            <input type="number" 
+                                   min="1" 
+                                   max="{{ item.quantidade }}" 
+                                   value="1"
+                                   x-model="novosItens[{{ item.id }}]"
+                                   class="w-16 px-2 py-1 border rounded text-center">
+                            <button @click="adicionarItem({{ item.id }}, '{{ item.nome }}', {{ item.preco }}, {{ item.quantidade }})"
+                                    class="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm transition-colors">
+                                <i class="fas fa-plus mr-1"></i>
+                                Adicionar
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Ações -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="flex justify-between items-center">
+            <a href="{{ url_for('dashboard.gerente') }}" 
+               class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Voltar
+            </a>
+            
+            <div class="flex space-x-4">
+                <button @click="salvarAlteracoes()" 
+                        class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-save mr-2"></i>
+                    Salvar Alterações
+                </button>
+                
+                <a href="{{ url_for('pedido.aprovar_pedido', pedido_id=pedido.id) }}" 
+                   class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-colors">
+                    <i class="fas fa-check mr-2"></i>
+                    Aprovar Pedido
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function editarPedido() {
+    return {
+        itens: [
+            {% for item in itens_pedido %}
+            {
+                id: {{ item.id }},
+                item_id: {{ item.item_id }},
+                item_nome: '{{ item.item_nome }}',
+                quantidade: {{ item.quantidade }},
+                preco_unitario: {{ item.preco_unitario }}
+            },
+            {% endfor %}
+        ],
+        novosItens: {},
+        
+        calcularTotal() {
+            return this.itens.reduce((total, item) => {
+                return total + (item.quantidade * item.preco_unitario);
+            }, 0);
+        },
+        
+        validarQuantidade(index) {
+            // Validar quantidade não negativa
+            if (this.itens[index].quantidade < 1) {
+                this.itens[index].quantidade = 1;
+                alert('Quantidade deve ser maior que zero!');
+            }
+        },
+        
+        removerItem(index) {
+            if (this.itens.length === 1) {
+                alert('Não é possível remover o último item do pedido!');
+                return;
+            }
+            
+            if (confirm('Tem certeza que deseja remover este item?')) {
+                this.itens.splice(index, 1);
+            }
+        },
+        
+        adicionarItem(id, nome, preco, estoque) {
+            const quantidade = parseInt(this.novosItens[id] || 1);
+            
+            if (quantidade <= 0) {
+                alert('Quantidade deve ser maior que zero!');
+                return;
+            }
+            
+            if (quantidade > estoque) {
+                alert('Quantidade maior que o estoque disponível!');
+                return;
+            }
+            
+            // Verificar se o item já existe no pedido
+            const itemExistente = this.itens.find(item => item.item_id === id);
+            
+            if (itemExistente) {
+                itemExistente.quantidade += quantidade;
+            } else {
+                this.itens.push({
+                    id: null, // Novo item
+                    item_id: id,
+                    item_nome: nome,
+                    quantidade: quantidade,
+                    preco_unitario: preco
+                });
+            }
+            
+            this.novosItens[id] = 1; // Reset
+        },
+        
+        async salvarAlteracoes() {
+            // Validar se há pelo menos um item
+            if (this.itens.length === 0) {
+                alert('O pedido deve ter pelo menos um item!');
+                return;
+            }
+            
+            // Validar quantidades
+            for (let item of this.itens) {
+                if (item.quantidade <= 0) {
+                    alert('Todas as quantidades devem ser maiores que zero!');
+                    return;
+                }
+            }
+            
+            try {
+                const response = await fetch('/salvar_edicao_pedido', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        pedido_id: {{ pedido.id }},
+                        itens: this.itens
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Alterações salvas com sucesso!');
+                    window.location.href = "{{ url_for('dashboard.gerente') }}";
+                } else {
+                    alert('Erro: ' + result.message);
+                }
+            } catch (error) {
+                alert('Erro ao salvar alterações: ' + error.message);
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

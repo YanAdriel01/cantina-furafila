@@ -10,6 +10,72 @@
         Sistema moderno de cantina com interface web intuitiva. 
         Faça seus pedidos de forma rápida e prática!
     </p>
+    
+    <!-- Status da Cantina -->
+    <div class="mt-6">
+        {% if status_cantina %}
+            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                <i class="fas fa-store mr-2"></i>
+                Cantina Aberta
+            </span>
+        {% else %}
+            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                <i class="fas fa-store-slash mr-2"></i>
+                Cantina Fechada
+            </span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Cardápio -->
+<div class="mb-12">
+    <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">
+        <i class="fas fa-clipboard-list text-purple-600 mr-3"></i>
+        Nosso Cardápio
+    </h2>
+    
+    {% if cardapio %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for item in cardapio %}
+                <div class="bg-white rounded-lg shadow-md card-hover p-6 cursor-pointer" onclick="redirectToOrder()">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xl font-semibold text-gray-800">{{ item.nome }}</h3>
+                        {% if item.quantidade > 0 %}
+                            <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                <i class="fas fa-check mr-1"></i>Disponível
+                            </span>
+                        {% else %}
+                            <span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                <i class="fas fa-times mr-1"></i>Esgotado
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-2xl font-bold text-purple-600">
+                            R$ {{ "%.2f"|format(item.preco) }}
+                        </span>
+                        <span class="text-sm text-gray-500">
+                            <i class="fas fa-box mr-1"></i>
+                            Estoque: {{ item.quantidade }}
+                        </span>
+                    </div>
+                    
+                    <div class="mt-4 text-center">
+                        <span class="text-sm text-purple-600 font-medium">
+                            <i class="fas fa-shopping-cart mr-1"></i>
+                            Clique para fazer pedido
+                        </span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-utensils text-gray-400 text-6xl mb-4"></i>
+            <p class="text-xl text-gray-500">Cardápio em breve...</p>
+        </div>
+    {% endif %}
 </div>
 
 <!-- Call to Action -->
@@ -22,7 +88,7 @@
             Faça login ou cadastre-se para começar a usar nosso sistema!
         </p>
         <div class="space-x-4">
-            <a href="{{ url_for('auth.login') }}" class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-semibold inline-block transition-colors">
+            <a href="{{ url_for('auth.login') }}" class="btn-primary text-white px-8 py-3 rounded-lg font-semibold inline-block">
                 <i class="fas fa-sign-in-alt mr-2"></i>
                 Fazer Login
             </a>
@@ -32,14 +98,52 @@
             </a>
         </div>
     </div>
-{% else %}
-    <div class="bg-white rounded-lg shadow-lg p-8 text-center">
-        <h3 class="text-2xl font-bold text-gray-800 mb-4">
-            Olá, {{ session.user_name }}!
-        </h3>
-        <p class="text-gray-600 mb-6">
-            Você está logado como {{ session.user_type.title() }}
-        </p>
-    </div>
 {% endif %}
+
+<!-- Recursos do Sistema -->
+<div class="mt-16">
+    <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">
+        Por que escolher a Cantina FuraFila?
+    </h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="text-center">
+            <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-clock text-purple-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Rapidez</h3>
+            <p class="text-gray-600">Faça seus pedidos em segundos e evite filas desnecessárias.</p>
+        </div>
+        
+        <div class="text-center">
+            <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-graduation-cap text-green-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Desconto Estudantil</h3>
+            <p class="text-gray-600">Estudantes ganham 10% de desconto em todos os pedidos!</p>
+        </div>
+        
+        <div class="text-center">
+            <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-mobile-alt text-blue-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">Interface Moderna</h3>
+            <p class="text-gray-600">Design responsivo e intuitivo para uma experiência perfeita.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+function redirectToOrder() {
+    {% if session.user_id %}
+        {% if session.user_type in ['cliente', 'clienteestudante'] %}
+            window.location.href = "{{ url_for('dashboard.cliente') }}";
+        {% else %}
+            alert('Apenas clientes podem fazer pedidos!');
+        {% endif %}
+    {% else %}
+        window.location.href = "{{ url_for('auth.login') }}";
+    {% endif %}
+}
+</script>
 {% endblock %}

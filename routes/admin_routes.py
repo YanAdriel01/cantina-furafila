@@ -91,6 +91,20 @@ def adicionar_item():
     except Exception as e:
         return jsonify({'success': False, 'message': f'Erro: {str(e)}'})
 
+@admin_bp.route('/remover_item/<int:item_id>')
+@require_admin(['gerente'])
+def remover_item(item_id):
+    """Remover item permanentemente (apenas gerente)"""
+    from database.dao.item_dao import ItemDAO
+    item_dao = ItemDAO(current_app.db_manager)
+    
+    if item_dao.deletar_item_permanente(item_id):
+        flash('Item removido com sucesso!', 'success')
+    else:
+        flash('Erro ao remover item!', 'error')
+    
+    return redirect(url_for('dashboard.gerente'))
+
 @admin_bp.route('/criar_usuario', methods=['POST'])
 @require_admin(['gerente'])
 def criar_usuario():
@@ -130,6 +144,69 @@ def criar_usuario():
             return jsonify({'success': True, 'message': 'Usuário criado com sucesso!'})
         else:
             return jsonify({'success': False, 'message': 'Erro ao criar usuário!'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Erro: {str(e)}'})
+
+@admin_bp.route('/editar_usuario', methods=['POST'])
+@require_admin(['gerente'])
+def editar_usuario():
+    """Editar usuário com validações (apenas gerente)"""
+    try:
+        user_id = int(request.json.get('id'))
+        nome = request.json.get('nome', '').strip()
+        email = request.json.get('email', '').strip()
+        senha = request.json.get('senha', '').strip()
+        tipo = request.json.get('tipo', '').strip()
+        matricula = request.json.get('matricula', '').strip()
+        
+        # Validações
+        if nome and len(nome) < 2:
+            return jsonify({'success': False, 'message': 'Nome deve ter pelo menos 2 caracteres!'})
+        
+        if email and not validar_email(email):
+            return jsonify({'success': False, 'message': 'Email inválido!'})
+        
+        if senha and len(senha) < 6:
+            return jsonify({'success': False, 'message': 'Senha deve ter pelo menos 6 caracteres!'})
+        
+        if tipo == 'estudante' and matricula and not validar_matricula(matricula):
+            return jsonify({'success': False, 'message': 'Matrícula deve conter apenas números!'})
+        
+        from database.dao.usuario_dao import UsuarioDAO
+        usuario_dao = UsuarioDAO(current_app.db_manager)
+        
+        # Atualizar dados básicos
+        if nome or email:
+            if not usuario_dao.atualizar_usuario(user_id, nome, email):
+                return jsonify({'success': False, 'message': 'Erro ao atualizar dados básicos!'})
+        
+        # Atualizar senha se fornecida
+        if senha:
+            if not usuario_dao.alterar_senha(user_id, senha):
+                return jsonify({'success': False, 'message': 'Erro ao alterar senha!'})
+        
+        # Atualizar tipo e matrícula se fornecidos
+        if tipo or matricula:
+            if not usuario_dao.atualizar_tipo_matricula(user_id, tipo, matricula):
+                return jsonify({'success': False, 'message': 'Erro ao atualizar tipo/matrícula!'})
+        
+        return jsonify({'success': True, 'message': 'Usuário atualizado com sucesso!'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Erro: {str(e)}'})
+
+@admin_bp.route('/deletar_usuario', methods=['POST'])
+@require_admin(['gerente'])
+def deletar_usuario():
+    """Deletar usuário (apenas gerente)"""
+    try:
+        user_id = int(request.json.get('user_id'))
+        
+        if current_app.sistema_login.remover_usuario(user_id):
+            return jsonify({'success': True, 'message': 'Usuário deletado com sucesso!'})
+        else:
+            return jsonify({'success': False, 'message': 'Erro ao deletar usuário!'})
             
     except Exception as e:
         return jsonify({'success': False, 'message': f'Erro: {str(e)}'})
