@@ -1,12 +1,12 @@
 class Item:
-    #classe abstrata representando o Item no sistema
-    # encapsulamento de informações 
-    def __init__(self, nome, preco, quantidade):
-        self.__nome = nome  
-        self.__preco = preco  
-        self.__quantidade = quantidade 
+    """Classe que representa um item do cardápio"""
     
-    #método getter para acessar informações protegidas
+    def __init__(self, nome, preco, quantidade):
+        self.__nome = nome  # Encapsulamento
+        self.__preco = preco  # Encapsulamento
+        self.__quantidade = quantidade  # Encapsulamento
+    
+    # Getters - Encapsulamento
     def get_nome(self):
         return self.__nome
     
@@ -16,7 +16,7 @@ class Item:
     def get_quantidade(self):
         return self.__quantidade
     
-    ##métodos setters para atualizar informações protegidas
+    # Setters - Encapsulamento
     def set_nome(self, nome):
         self.__nome = nome
     

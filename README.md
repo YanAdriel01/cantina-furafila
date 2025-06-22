@@ -1,5 +1,6 @@
-# dashboards específicos por tipo de usuário
+# Sistema de autenticação e rotas básicas
 
-Interface por tipo de usuário
-Sistema de pedidos completo
-Controle de permissões
+## Estrutura Base do Projeto
+- Login/cadastro
+- Validadores
+- Rotas básicas

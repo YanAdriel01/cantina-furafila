@@ -1,17 +1,17 @@
 class Pedido:
-    #classe abstrata representando um pedido
+    """Classe que representa um pedido"""
     
     _contador_id = 1  # Contador estático para IDs únicos
     
     def __init__(self, cliente, itens):
-        #encapsulamento de informações do cliente
-        self.__id = Pedido._contador_id
+        self.__id = Pedido._contador_id  # Encapsulamento
         Pedido._contador_id += 1
-        self.__cliente = cliente
-        self.__itens = itens
-        self.__aprovado = False
+        self.__cliente = cliente  # Encapsulamento
+        self.__itens = itens  # Lista de tuplas (item, quantidade)
+        self.__total = 0  # Encapsulamento
+        self.__aprovado = False  # Encapsulamento
     
-    #getters para acessar infromações protegidas
+    # Getters - Encapsulamento
     def get_id(self):
         return self.__id
     
@@ -27,7 +27,7 @@ class Pedido:
     def get_aprovado(self):
         return self.__aprovado
     
-    #setter para settar informações protegidas
+    # Setters - Encapsulamento
     def set_total(self, total):
         self.__total = total
     
