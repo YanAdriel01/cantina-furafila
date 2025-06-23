@@ -6,7 +6,5 @@
   "scripts": {
     "dev": "python app.py",
     "start": "python app.py"
-  },
-  "dependencies": {},
-  "devDependencies": {}
+  }
 }

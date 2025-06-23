@@ -17,7 +17,6 @@ def login():
         email = request.form['email'].strip()
         senha = request.form['senha']
         
-        # Validações básicas
         if not email or not senha:
             flash('Email e senha são obrigatórios!', 'error')
             return render_template('login.html')
@@ -33,7 +32,6 @@ def login():
             session['user_type'] = usuario.__class__.__name__.lower()
             flash(f'Bem-vindo, {usuario.get_nome()}!', 'success')
             
-            # Redirecionar baseado no tipo de usuário
             if session['user_type'] == 'gerente':
                 return redirect(url_for('dashboard.gerente'))
             elif session['user_type'] == 'funcionario':
@@ -47,11 +45,10 @@ def login():
 
 @auth_bp.route('/reset_password', methods=['POST'])
 def reset_password():
-    """Reset de senha com validação"""
+    """Reset de senha"""
     email = request.form['email'].strip()
     nova_senha = request.form['nova_senha'].strip()
     
-    # Validações
     if not email or not nova_senha:
         flash('Email e nova senha são obrigatórios!', 'error')
         return redirect(url_for('auth.login'))
@@ -80,7 +77,7 @@ def reset_password():
 
 @auth_bp.route('/cadastro', methods=['GET', 'POST'])
 def cadastro():
-    """Página de cadastro com validações"""
+    """Página de cadastro"""
     if request.method == 'POST':
         nome = request.form['nome'].strip()
         cpf = request.form['cpf'].strip()
@@ -90,8 +87,7 @@ def cadastro():
         matricula = request.form.get('matricula', '').strip() if eh_estudante else None
         tipo = 'estudante' if eh_estudante else 'cliente'
         
-        # Validações
-        if not nome or not cpf or not email or not senha:
+        if not all([nome, cpf, email, senha]):
             flash('Todos os campos são obrigatórios!', 'error')
             return render_template('cadastro.html')
         

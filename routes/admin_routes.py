@@ -20,7 +20,7 @@ def require_admin(user_types):
 @admin_bp.route('/toggle_cantina')
 @require_admin(['funcionario', 'gerente'])
 def toggle_cantina():
-    """Abrir/fechar cantina (funcionário/gerente)"""
+    """Abrir/fechar cantina"""
     status_atual = current_app.cantina.get_status()
     current_app.cantina.set_status(not status_atual)
     
@@ -37,7 +37,7 @@ def toggle_cantina():
 @admin_bp.route('/atualizar_estoque', methods=['POST'])
 @require_admin(['funcionario', 'gerente'])
 def atualizar_estoque():
-    """Atualizar estoque de item com validações"""
+    """Atualizar estoque de item"""
     try:
         item_id = int(request.json.get('item_id'))
         nova_quantidade = int(request.json.get('quantidade'))
@@ -59,17 +59,13 @@ def atualizar_estoque():
 @admin_bp.route('/adicionar_item', methods=['POST'])
 @require_admin(['gerente'])
 def adicionar_item():
-    """Adicionar novo item com validações (apenas gerente)"""
+    """Adicionar novo item (apenas gerente)"""
     try:
         nome = request.json.get('nome', '').strip()
         preco = float(request.json.get('preco'))
         quantidade = int(request.json.get('quantidade'))
         
-        # Validações
-        if not nome:
-            return jsonify({'success': False, 'message': 'Nome é obrigatório!'})
-        
-        if len(nome) < 2:
+        if not nome or len(nome) < 2:
             return jsonify({'success': False, 'message': 'Nome deve ter pelo menos 2 caracteres!'})
         
         if preco <= 0:
@@ -94,7 +90,7 @@ def adicionar_item():
 @admin_bp.route('/remover_item/<int:item_id>')
 @require_admin(['gerente'])
 def remover_item(item_id):
-    """Remover item permanentemente (apenas gerente)"""
+    """Remover item (apenas gerente)"""
     from database.dao.item_dao import ItemDAO
     item_dao = ItemDAO(current_app.db_manager)
     
@@ -108,7 +104,7 @@ def remover_item(item_id):
 @admin_bp.route('/criar_usuario', methods=['POST'])
 @require_admin(['gerente'])
 def criar_usuario():
-    """Criar novo usuário com validações (apenas gerente)"""
+    """Criar novo usuário (apenas gerente)"""
     try:
         nome = request.json.get('nome', '').strip()
         cpf = request.json.get('cpf', '').strip()
@@ -117,8 +113,7 @@ def criar_usuario():
         senha = request.json.get('senha', '').strip()
         matricula = request.json.get('matricula', '').strip() if tipo == 'estudante' else None
         
-        # Validações
-        if not nome or not cpf or not email or not tipo or not senha:
+        if not all([nome, cpf, email, tipo, senha]):
             return jsonify({'success': False, 'message': 'Todos os campos são obrigatórios!'})
         
         if len(nome) < 2:
@@ -136,7 +131,6 @@ def criar_usuario():
         if tipo == 'estudante':
             if not matricula:
                 return jsonify({'success': False, 'message': 'Matrícula é obrigatória para estudantes!'})
-            
             if not validar_matricula(matricula):
                 return jsonify({'success': False, 'message': 'Matrícula deve conter apenas números!'})
         
@@ -151,7 +145,7 @@ def criar_usuario():
 @admin_bp.route('/editar_usuario', methods=['POST'])
 @require_admin(['gerente'])
 def editar_usuario():
-    """Editar usuário com validações (apenas gerente)"""
+    """Editar usuário (apenas gerente)"""
     try:
         user_id = int(request.json.get('id'))
         nome = request.json.get('nome', '').strip()
@@ -160,7 +154,6 @@ def editar_usuario():
         tipo = request.json.get('tipo', '').strip()
         matricula = request.json.get('matricula', '').strip()
         
-        # Validações
         if nome and len(nome) < 2:
             return jsonify({'success': False, 'message': 'Nome deve ter pelo menos 2 caracteres!'})
         
@@ -176,17 +169,14 @@ def editar_usuario():
         from database.dao.usuario_dao import UsuarioDAO
         usuario_dao = UsuarioDAO(current_app.db_manager)
         
-        # Atualizar dados básicos
         if nome or email:
             if not usuario_dao.atualizar_usuario(user_id, nome, email):
                 return jsonify({'success': False, 'message': 'Erro ao atualizar dados básicos!'})
         
-        # Atualizar senha se fornecida
         if senha:
             if not usuario_dao.alterar_senha(user_id, senha):
                 return jsonify({'success': False, 'message': 'Erro ao alterar senha!'})
         
-        # Atualizar tipo e matrícula se fornecidos
         if tipo or matricula:
             if not usuario_dao.atualizar_tipo_matricula(user_id, tipo, matricula):
                 return jsonify({'success': False, 'message': 'Erro ao atualizar tipo/matrícula!'})
