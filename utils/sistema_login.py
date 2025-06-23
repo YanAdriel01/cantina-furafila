@@ -10,10 +10,7 @@ class SistemaLogin:
         self.usuario_dao = UsuarioDAO(db_manager)
     
     def login(self, email, senha):
-        """
-        Realiza login no sistema
-        Agora TODOS os usuários precisam de senha
-        """
+        """Realiza login no sistema"""
         user_data = self.usuario_dao.buscar_por_email(email)
         
         if not user_data:
